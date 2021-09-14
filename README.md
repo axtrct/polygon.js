@@ -18,4 +18,5 @@ polygon.js is an npm module intended to make interacting with Project Polygon's 
 
 ## Installation
 
-`npm i polygon.js`
+(polygon.js is not currently on NPM)  
+~~`npm i polygon.js`~~  
