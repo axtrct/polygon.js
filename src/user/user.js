@@ -117,6 +117,20 @@ class User extends EventEmitter {
         }, `blurb=${encodeURI(blurb)}&theme=${encodeURI(theme)}&filter=${encodeURI(filter)}&debugging=${encodeURI(debug)}`).post().catch(e => this.emit("error", "SetSettingsFail", e))
     }
 
+    async getFeed() {
+        let feed = await new HTTPSRequest({
+            host: constants.POLYGON,
+            path: "/api/account/get-feed",
+            headers: { 
+                "User-Agent": constants.GLOBAL_USER_AGENT, 
+                "Cookie": `${constants.POLYGON_SESSION_COOKIE}=${this.session}`, 
+                "x-polygon-csrf": this.csrf 
+            }
+        }).post().catch(e => this.emit("error", "FetchFeedFail", e))
+
+        return feed.body.feed
+    }
+
     username = this.username
     userid = this.userid
     friendRequests = this.friendRequests
