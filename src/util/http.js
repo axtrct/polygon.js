@@ -1,34 +1,4 @@
-const http = require("http")
 const https = require("https")
-
-class HTTPRequest {
-    constructor(data = {}, body = "") {
-        this.data = Object.assign({
-            host: "",
-            path: "",
-            port: 80,
-            method: "GET",
-            headers: {}
-        }, data)
-
-        this.body = body
-    }
-
-    send() {
-        return new Promise((resolve, reject) => {
-            let request = http.request(this.data, (response) => {
-                if (response.statusCode < 200 || response.statusCode >= 300 && response.statusCode !== 302) return reject(new Error(response.statusCode))
-                let body = []
-                response.on("data", (chunk) => body.push(chunk))
-                response.on("end", () => resolve({ headers: response.headers, body: Buffer.concat(body).toString() }))
-            })
-
-            request.on("error", reject)
-            if (this.body !== "") request.write(this.body)
-            request.end()
-        })
-    }
-}
 
 class HTTPSRequest {
     constructor(data = {}, body = "") {
@@ -36,30 +6,53 @@ class HTTPSRequest {
             host: "",
             path: "",
             port: 443,
-            method: "GET",
+            method: "",
             headers: {}
         }, data)
 
         this.body = body
     }
 
-    send() {
+    get() {
         return new Promise((resolve, reject) => {
+            this.data.method = "GET"
+
             let request = https.request(this.data, (response) => {
                 if (response.statusCode < 200 || response.statusCode >= 300 && response.statusCode !== 302) return reject(new Error(response.statusCode))
                 let body = []
                 response.on("data", (chunk) => body.push(chunk))
-                response.on("end", () => resolve({ headers: response.headers, body: Buffer.concat(body).toString() }))
+                response.on("end", () => {
+                    if (response.headers["content-type"] == "application/json") return resolve({ headers: response.headers, body: JSON.parse(Buffer.concat(body).toString()) })
+                    resolve({ headers: response.headers, body: Buffer.concat(body).toString() })
+                })
             })
 
             request.on("error", reject)
-            if (this.body !== "") request.write(this.body)
+            request.end()
+        })
+    }
+
+    post() {
+        return new Promise((resolve, reject) => {
+            this.data.method = "POST"
+            
+            let request = https.request(this.data, (response) => {
+                if (response.statusCode < 200 || response.statusCode >= 300 && response.statusCode !== 302) return reject(new Error(response.statusCode))
+                let body = []
+                response.on("data", (chunk) => body.push(chunk))
+                response.on("end", () => {
+                    if (response.headers["content-type"] == "application/json") return resolve({ headers: response.headers, body: JSON.parse(Buffer.concat(body).toString()) })
+                    resolve({ headers: response.headers, body: Buffer.concat(body).toString() })
+                })
+            })
+
+            request.on("error", reject)
+            if (this.body.length !== 0) request.write(this.body)
             request.end()
         })
     }
 }
 
 module.exports = {
-    HTTPRequest,
     HTTPSRequest
 }

@@ -4,7 +4,6 @@ const { HTTPSRequest } = require("../util/http")
 const constants = require("../util/constants")
 const cookies = require("../util/cookies")
 const timing = require("../util/timing")
-const userinfo = require("../util/userinfo")
 
 class User extends EventEmitter {
     constructor(options = {}) {
@@ -16,38 +15,40 @@ class User extends EventEmitter {
         new HTTPSRequest({
             host: constants.POLYGON,
             path: "/login",
-            method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded", "User-Agent": constants.GLOBAL_USER_AGENT }
-        }, `username=${username}&password=${password}`).send().then((loginData) => {
+        }, `username=${username}&password=${password}`).post().then((loginData) => {
             if (loginData.headers.location == "/login/2fa") return this.emit("authfail", new Error("polygon.js does not currently support accounts that have Two-Factor Authentication enabled."))
 
             this.session = cookies.parse(loginData.headers["set-cookie"]).find(cookie => cookie.name == constants.POLYGON_SESSION_COOKIE).value
+            
+            let userInfo = await new HTTPSRequest({
+                host: constants.POLYGON_API,
+                path: `users/get-by-username?username=${username}`,
+                headers: { "User-Agent": constants.GLOBAL_USER_AGENT }
+            }).get().catch(e => this.emit("error", "UserInfoFetchFail", e))
+            this.userid = userInfo.Id
             this.username = username
 
             new HTTPSRequest({
                 host: constants.POLYGON,
                 path: "/home",
-                method: "GET",
                 headers: { "User-Agent": constants.GLOBAL_USER_AGENT, "Cookie": `${constants.POLYGON_SESSION_COOKIE}=${this.session}` }
-            }).send().then(async (homeData) => {
+            }).get().then(async (homeData) => {
                 let $ = cheerio.load(homeData.body)
-                this.userid = userinfo(homeData).id
                 this.csrf = $('meta[name="polygon-csrf"]').attr("content")
                 this.ping = timing.interval(() => {
                     new HTTPSRequest({
                         host: constants.POLYGON,
                         path: "/api/account/update-ping",
-                        method: "POST",
                         headers: { "User-Agent": constants.GLOBAL_USER_AGENT, "Cookie": `${constants.POLYGON_SESSION_COOKIE}=${this.session}`, "x-polygon-csrf": this.csrf }
-                    }).send().then((pingData) => this.friendRequests = JSON.parse(pingData.body).friendRequests).catch(e => this.emit("error", "PingFail", e))
+                    }).post().then((pingData) => this.friendRequests = JSON.parse(pingData.body).friendRequests).catch(e => this.emit("error", "PingFail", e))
                 }, 30000)
     
                 await new HTTPSRequest({
                     host: constants.POLYGON,
                     path: "/api/account/update-ping",
-                    method: "POST",
                     headers: { "User-Agent": constants.GLOBAL_USER_AGENT, "Cookie": `${constants.POLYGON_SESSION_COOKIE}=${this.session}`, "x-polygon-csrf": this.csrf }
-                }).send().then((pingData) => this.friendRequests = JSON.parse(pingData.body).friendRequests).catch(e => this.emit("error", "PingFail", e))
+                }).post().then((pingData) => this.friendRequests = JSON.parse(pingData.body).friendRequests).catch(e => this.emit("error", "PingFail", e))
                 
                 this.emit("ready", this)
             }).catch(e => this.emit("error", "CSRFFail", e))
@@ -58,9 +59,8 @@ class User extends EventEmitter {
         await new HTTPSRequest({
             host: constants.POLYGON,
             path: "/logout",
-            method: "GET",
             headers: { "User-Agent": constants.GLOBAL_USER_AGENT, "Cookie": `${constants.POLYGON_SESSION_COOKIE}=${this.session}` }
-        }).send().catch(e => console.log(e))
+        }).get().catch(e => console.log(e))
 
         this.session = null
         this.username = null
@@ -74,21 +74,19 @@ class User extends EventEmitter {
 
     async currency() {
         let moneyData = await new HTTPSRequest({
-            host: constants.POLYGON,
-            path: "/my/money",
-            method: "GET",
+            host: constants.POLYGON_API,
+            path: "/currency/balance",
             headers: { "User-Agent": constants.GLOBAL_USER_AGENT, "Cookie": `${constants.POLYGON_SESSION_COOKIE}=${this.session}` }
-        }).send().catch(e => console.log(e))
-        return userinfo(moneyData).money
+        }).get().catch(e => console.log(e))
+        return moneyData.body.pizzas
     }
 
     async getSettings() {
         let settingsGet = await new HTTPSRequest({
             host: constants.POLYGON,
             path: "/my/account",
-            method: "GET",
             headers: { "User-Agent": constants.GLOBAL_USER_AGENT, "Cookie": `${constants.POLYGON_SESSION_COOKIE}=${this.session}` }
-        }).send().catch(e => this.emit("error", "GetSettingsPageFail", e))
+        }).get().catch(e => this.emit("error", "GetSettingsFail", e))
 
         let $ = cheerio.load(settingsGet.body)
         this.csrf = $('meta[name="polygon-csrf"]').attr("content")
@@ -112,14 +110,13 @@ class User extends EventEmitter {
         await new HTTPSRequest({
             host: constants.POLYGON,
             path: "/api/account/update-settings",
-            method: "POST",
             headers: { 
                 "Content-Type": "application/x-www-form-urlencoded", 
                 "User-Agent": constants.GLOBAL_USER_AGENT, 
                 "Cookie": `${constants.POLYGON_SESSION_COOKIE}=${this.session}`, 
                 "x-polygon-csrf": this.csrf 
             }
-        }, `blurb=${encodeURI(blurb)}&theme=${encodeURI(theme)}&filter=${encodeURI(filter)}&debugging=${encodeURI(debug)}`).send().catch(e => this.emit("error", "SetSettingsFail", e))
+        }, `blurb=${encodeURI(blurb)}&theme=${encodeURI(theme)}&filter=${encodeURI(filter)}&debugging=${encodeURI(debug)}`).post().catch(e => this.emit("error", "SetSettingsFail", e))
     }
 
     username = this.username
