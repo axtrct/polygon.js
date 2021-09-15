@@ -16,19 +16,9 @@ class User extends EventEmitter {
             host: constants.POLYGON,
             path: "/login",
             headers: { "Content-Type": "application/x-www-form-urlencoded", "User-Agent": constants.GLOBAL_USER_AGENT }
-        }, `username=${username}&password=${password}`).post().then((loginData) => {
+        }, `username=${username}&password=${password}`).post().then(async (loginData) => {
             if (loginData.headers.location == "/login/2fa") return this.emit("authfail", new Error("polygon.js does not currently support accounts that have Two-Factor Authentication enabled."))
-
             this.session = cookies.parse(loginData.headers["set-cookie"]).find(cookie => cookie.name == constants.POLYGON_SESSION_COOKIE).value
-            
-            let userInfo = await new HTTPSRequest({
-                host: constants.POLYGON_API,
-                path: `users/get-by-username?username=${username}`,
-                headers: { "User-Agent": constants.GLOBAL_USER_AGENT }
-            }).get().catch(e => this.emit("error", "UserInfoFetchFail", e))
-            this.userid = userInfo.Id
-            this.username = username
-
             new HTTPSRequest({
                 host: constants.POLYGON,
                 path: "/home",
@@ -41,14 +31,22 @@ class User extends EventEmitter {
                         host: constants.POLYGON,
                         path: "/api/account/update-ping",
                         headers: { "User-Agent": constants.GLOBAL_USER_AGENT, "Cookie": `${constants.POLYGON_SESSION_COOKIE}=${this.session}`, "x-polygon-csrf": this.csrf }
-                    }).post().then((pingData) => this.friendRequests = JSON.parse(pingData.body).friendRequests).catch(e => this.emit("error", "PingFail", e))
+                    }).post().then((pingData) => this.friendRequests = pingData.body.friendRequests).catch(e => this.emit("error", "PingFail", e))
                 }, 30000)
     
                 await new HTTPSRequest({
                     host: constants.POLYGON,
                     path: "/api/account/update-ping",
                     headers: { "User-Agent": constants.GLOBAL_USER_AGENT, "Cookie": `${constants.POLYGON_SESSION_COOKIE}=${this.session}`, "x-polygon-csrf": this.csrf }
-                }).post().then((pingData) => this.friendRequests = JSON.parse(pingData.body).friendRequests).catch(e => this.emit("error", "PingFail", e))
+                }).post().then((pingData) => this.friendRequests = pingData.body.friendRequests).catch(e => this.emit("error", "PingFail", e))
+
+                let userInfo = await new HTTPSRequest({
+                    host: constants.POLYGON_API,
+                    path: `/users/get-by-username?username=${username}`,
+                    headers: { "User-Agent": constants.GLOBAL_USER_AGENT }
+                }).get().catch(e => this.emit("error", "UserInfoFetchFail", e))
+                this.userid = userInfo.body.Id
+                this.username = username
                 
                 this.emit("ready", this)
             }).catch(e => this.emit("error", "CSRFFail", e))
