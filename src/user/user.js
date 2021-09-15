@@ -5,6 +5,7 @@ const constants = require("../util/constants")
 const cookies = require("../util/cookies")
 const timing = require("../util/timing")
 
+const Marketplace = require("./Marketplace")
 class User extends EventEmitter {
     constructor(options = {}) {
         super(options)
@@ -130,6 +131,36 @@ class User extends EventEmitter {
 
         return feed.body.feed
     }
+
+    async sendFriendRequest(userid) {
+        let feed = await new HTTPSRequest({
+            host: constants.POLYGON,
+            path: "/api/friends/send",
+            headers: { 
+                "User-Agent": constants.GLOBAL_USER_AGENT, 
+                "Cookie": `${constants.POLYGON_SESSION_COOKIE}=${this.session}`, 
+                "x-polygon-csrf": this.csrf 
+            }
+        }, `friendID=false&userID=${userid}`).post().catch(e => this.emit("error", "SendFriendRequestFail", e))
+
+        return feed.body.success
+    }
+
+    async removeFriend(userid) {
+        let feed = await new HTTPSRequest({
+            host: constants.POLYGON,
+            path: "/api/friends/revoke",
+            headers: { 
+                "User-Agent": constants.GLOBAL_USER_AGENT, 
+                "Cookie": `${constants.POLYGON_SESSION_COOKIE}=${this.session}`, 
+                "x-polygon-csrf": this.csrf 
+            }
+        }, `friendID=${userid}&userID=false`).post().catch(e => this.emit("error", "RevokeFriendshipFail", e))
+
+        return feed.body.success
+    }
+
+    marketplace = new Marketplace(this)
 
     username = this.username
     userid = this.userid
