@@ -3,6 +3,7 @@
 [![forthebadge](https://forthebadge.com/images/badges/0-percent-optimized.svg)](https://forthebadge.com)
 [![forthebadge](https://forthebadge.com/images/badges/mom-made-pizza-rolls.svg)](https://forthebadge.com)
 [![forthebadge](https://forthebadge.com/images/badges/powered-by-comcast.svg)](https://forthebadge.com)
+[![forthebadge](https://raw.githubusercontent.com/I-Have-An-Issue/I-Have-An-Issue/main/i_eat_crayons.svg)](https://forthebadge.com)
 
 *A package for interacting with Project Polygon's APIs*
 
