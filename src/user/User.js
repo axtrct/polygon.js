@@ -76,8 +76,8 @@ class User extends EventEmitter {
             host: constants.POLYGON_API,
             path: "/currency/balance",
             headers: { "User-Agent": constants.GLOBAL_USER_AGENT, "Cookie": `${constants.POLYGON_SESSION_COOKIE}=${this.session}` }
-        }).get().catch(e => console.log(e))
-        return moneyData.body.pizzas
+        }).get().catch(e => this.emit("error", "GetCurrencyFail", e))
+        return moneyData.body.pizzas || null
     }
 
     async getSettings() {
