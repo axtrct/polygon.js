@@ -3,7 +3,8 @@
 [![forthebadge](https://forthebadge.com/images/badges/0-percent-optimized.svg)](https://forthebadge.com)
 [![forthebadge](https://forthebadge.com/images/badges/mom-made-pizza-rolls.svg)](https://forthebadge.com)
 [![forthebadge](https://forthebadge.com/images/badges/powered-by-comcast.svg)](https://forthebadge.com)
-[![forthebadge](https://raw.githubusercontent.com/I-Have-An-Issue/I-Have-An-Issue/main/i_eat_crayons.svg)](https://forthebadge.com)
+[![forthebadge](https://raw.githubusercontent.com/I-Have-An-Issue/I-Have-An-Issue/main/i_eat_crayons.svg)](https://forthebadge.com)  
+[![NPM](https://nodei.co/npm/@i-have-an-issue/polygon.js.png?compact=true)](https://nodei.co/npm/@i-have-an-issue/polygon.js/)
 
 *A package for interacting with Project Polygon's APIs*
 
@@ -19,4 +20,4 @@ polygon.js is an npm module intended to make interacting with Project Polygon's 
 
 ## Installation
 
-`npm i polygon.js`
+`npm i @i-have-an-issue/polygon.js`
