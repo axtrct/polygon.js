@@ -6,6 +6,7 @@ const cookies = require("../util/cookies")
 const timing = require("../util/timing")
 
 const Marketplace = require("./Marketplace")
+const People = require("./People")
 class User extends EventEmitter {
     constructor(options = {}) {
         super(options)
@@ -161,6 +162,7 @@ class User extends EventEmitter {
     }
 
     marketplace = new Marketplace(this)
+    people = new People(this)
 
     username = this.username
     userid = this.userid
