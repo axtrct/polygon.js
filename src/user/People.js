@@ -37,7 +37,9 @@ class People {
             .then(profile => {
                 let $ = cheerio.load(profile.body)
                 resolve({
-                    blurb: $(`div[class="text-center"] > p[class="text-break"]`).text()
+                    blurb: $(`div[class="text-center"] > p[class="text-break"]`).text(),
+                    thumbnail: $(`img[class="img-fluid mx-auto d-block"]`).attr("src"),
+                    username: $(`h2[class="font-weight-normal"]`).text().replace("'s Profile", "")
                 })
             })
             .catch(e => {
