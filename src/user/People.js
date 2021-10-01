@@ -39,7 +39,7 @@ class People {
                 resolve({
                     blurb: $(`div[class="text-center"] > p[class="text-break"]`).text(),
                     thumbnail: $(`img[class="img-fluid mx-auto d-block"]`).attr("src"),
-                    username: $(`h2[class="font-weight-normal"]`).text().replace("'s Profile", "")
+                    username: $(`div[class="px-4 pb-4"] > h2[class="font-weight-normal"]`).text().replace("'s Profile", "")
                 })
             })
             .catch(e => {
